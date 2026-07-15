@@ -1,8 +1,10 @@
 import streamlit as st
+import pandas as pd
 import plotly.express as px
+import math
 
 # ==========================
-# PAGE CONFIG
+# Page Configuration
 # ==========================
 st.set_page_config(
     page_title="Savings Goal Calculator",
@@ -10,65 +12,63 @@ st.set_page_config(
     layout="centered"
 )
 
-st.title("💰 Savings Goal Calculator")
-st.write("Plan your savings and see how long it will take to reach your goal.")
+st.title("Savings Goal Calculator")
+st.write("Calculate how long it will take to reach your savings goal.")
 
 st.divider()
 
 # ==========================
-# INPUT
+# User Input
 # ==========================
 
 goal = st.number_input(
-    "🎯 Savings Goal (VND)",
-    min_value=0,
-    value=100000000,
-    step=1000000
+    "Savings Goal (VND)",
+    min_value=1,
+    value=100_000_000,
+    step=1_000_000
 )
 
 current = st.number_input(
-    "💵 Current Savings (VND)",
+    "Current Savings (VND)",
     min_value=0,
-    value=20000000,
-    step=1000000
+    value=20_000_000,
+    step=1_000_000
 )
 
 monthly = st.number_input(
-    "📅 Monthly Savings (VND)",
+    "Monthly Savings (VND)",
     min_value=1,
-    value=5000000,
-    step=500000
+    value=5_000_000,
+    step=500_000
 )
 
-st.divider()
-
 # ==========================
-# CALCULATION
+# Calculation
 # ==========================
 
 remaining = max(goal - current, 0)
 
-months = 0
+if remaining == 0:
+    months = 0
+else:
+    months = math.ceil(remaining / monthly)
 
-if remaining > 0:
-    months = remaining / monthly
-
-years = int(months // 12)
-extra_months = int(months % 12)
+years = months // 12
+months_left = months % 12
 
 progress = min(current / goal, 1.0)
 
 # ==========================
-# RESULT
+# Results
 # ==========================
 
-st.header("📊 Result")
+st.header("Results")
 
 col1, col2 = st.columns(2)
 
 with col1:
     st.metric(
-        "Goal",
+        "Savings Goal",
         f"{goal:,.0f} VND"
     )
 
@@ -79,80 +79,90 @@ with col1:
 
 with col2:
     st.metric(
-        "Remaining",
+        "Remaining Amount",
         f"{remaining:,.0f} VND"
     )
 
     if remaining == 0:
-        st.metric("Time Needed", "Completed 🎉")
+        st.metric(
+            "Time Needed",
+            "Completed"
+        )
     else:
         st.metric(
             "Time Needed",
-            f"{years} years {extra_months} months"
+            f"{years} Year(s) {months_left} Month(s)"
         )
 
 st.divider()
 
 # ==========================
-# PROGRESS BAR
+# Progress
 # ==========================
 
-st.subheader("📈 Progress")
+st.subheader("Progress")
 
 st.progress(progress)
 
 st.write(f"Progress: **{progress*100:.1f}%**")
 
+st.divider()
+
 # ==========================
-# PIE CHART
+# Pie Chart
 # ==========================
 
+chart = pd.DataFrame({
+    "Category": ["Saved", "Remaining"],
+    "Amount": [current, remaining]
+})
+
 fig = px.pie(
-    names=["Saved", "Remaining"],
-    values=[current, remaining],
+    chart,
+    names="Category",
+    values="Amount",
     hole=0.45,
     title="Savings Progress"
 )
 
 st.plotly_chart(fig, use_container_width=True)
 
-# ==========================
-# FINANCIAL TIPS
-# ==========================
-
 st.divider()
 
-st.subheader("💡 Financial Tips")
+# ==========================
+# Recommendation
+# ==========================
 
-if progress >= 1:
+st.subheader("Recommendation")
+
+if progress == 1:
     st.success("Congratulations! You have reached your savings goal.")
 
 elif progress >= 0.75:
-    st.success("Great job! You're almost there.")
+    st.success("Excellent progress. You are almost there.")
 
-elif progress >= 0.5:
-    st.info("You're halfway to your goal. Keep saving!")
+elif progress >= 0.50:
+    st.info("Good progress. Keep saving consistently.")
 
 elif progress >= 0.25:
-    st.warning("Good start! Try increasing your monthly savings if possible.")
+    st.warning("You have made a good start. Try increasing your monthly savings if possible.")
 
 else:
-    st.error("You're just getting started. Consistency is the key!")
-
-# ==========================
-# EXTRA INFORMATION
-# ==========================
+    st.error("Your savings have just started. Build a consistent saving habit.")
 
 st.divider()
 
-daily = monthly / 30
+# ==========================
+# Saving Plan
+# ==========================
 
+daily = monthly / 30
 weekly = monthly / 4
 
-st.subheader("📅 Suggested Saving Plan")
+st.subheader("Suggested Saving Plan")
 
-st.write(f"Save **{daily:,.0f} VND/day**")
+st.write(f"Save **{daily:,.0f} VND per day**")
 
-st.write(f"Or **{weekly:,.0f} VND/week**")
+st.write(f"Save **{weekly:,.0f} VND per week**")
 
-st.caption("Made with ❤️ using Streamlit")
+st.caption("Developed with Streamlit")
